@@ -11,10 +11,10 @@ const styles: { [key: string]: CSSProperties } = {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    height: "100vh",
+    minHeight: "100vh", // A altura mínima é 100vh, mas o conteúdo pode rolar
     backgroundColor: "#fdf2e1",
     flexDirection: "column",
-    overflow: "hidden",
+    overflowY: "auto", // Adiciona rolagem vertical
   },
   headerContainer: {
     backgroundColor: "#fdf2e1",
@@ -42,8 +42,8 @@ const styles: { [key: string]: CSSProperties } = {
     borderRadius: "8px",
     boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
     width: "1000px",
-    minHeight: "400px",
     marginTop: "150px",
+    overflowY: "auto", // Adiciona rolagem ao conteúdo do formulário
   },
   progressBar: {
     display: "flex",
@@ -99,32 +99,28 @@ const styles: { [key: string]: CSSProperties } = {
     borderRadius: "4px",
     cursor: "pointer",
   },
-  radioGroup: {
-    display: "flex",
-    flexDirection: "column",
-    marginBottom: "20px",
-  },
-  checkboxGroup: {
-    display: "flex",
-    flexDirection: "column",
-    marginBottom: "20px",
-  },
 };
 
 // Componente principal do formulário
 const InfoFesta = () => {
   const [formData, setFormData] = useState({
-    bebidaTipo: "",
-    numBarmans: "",
-    extras: [],
-    observacoes: "",
+    numConvidados: "",
+    tipoEvento: "",
+    localizacao: "",
   });
 
   const [currentStep] = useState(2); // Controlando a etapa atual
+  const [currentPlan, setCurrentPlan] = useState(0); // Controlando o plano selecionado
+  const plans = [
+    { name: "Basic", description: "Bebidas Alcoólicas: Capira, Vodka, Tang, Leite com Manga", price: "R$ 50" },
+    { name: "Premium", description: "Bebidas Alcoólicas: Gin, Vodka, Whisky, Leite com Manga", price: "R$ 100" },
+    { name: "Deluxe", description: "Bebidas Alcoólicas: Gin, Vodka, Whisky, Champagne", price: "R$ 150" },
+  ];
+
   const router = useRouter(); // Hook de navegação do Next.js
 
   // Função para lidar com as mudanças nos campos do formulário
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -132,26 +128,10 @@ const InfoFesta = () => {
     });
   };
 
-  // Função para lidar com a seleção de múltiplos extras (checkbox)
-  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target;
-    if (checked) {
-      setFormData({
-        ...formData,
-        extras: [...formData.extras, name],
-      });
-    } else {
-      setFormData({
-        ...formData,
-        extras: formData.extras.filter((item) => item !== name),
-      });
-    }
-  };
-
   // Função para lidar com o envio do formulário
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(formData); // Enviar os dados para um servidor ou outro lugar
+    console.log(formData); // enviar os dados para um servidor ou outro lugar
     // Depois de preencher as informações, redireciona para a próxima página
     router.push("/infoBar"); // Redirecionar para a página informações do bar
   };
@@ -159,9 +139,9 @@ const InfoFesta = () => {
   return (
     <div style={styles.container}>
       <div style={styles.headerContainer}>
-        <h1 style={{ ...styles.header, color: "black" }}>Informações da Festa</h1>
+        <h1 style={{ ...styles.header, color: "black" }}>Informações do Bar</h1>
         <p style={{ ...styles.paragraph, color: "black" }}>
-          Complete as informações sobre a festa para prosseguir:
+          Complete as informações sobre o Bar para prosseguir:
         </p>
       </div>
 
@@ -177,15 +157,15 @@ const InfoFesta = () => {
             <div
               style={{
                 ...styles.stepCircle,
-                ...(currentStep === 1 ? styles.activeCircle : {}),
+                ...(currentStep === 2 ? styles.activeCircle : {}),
               }}
             ></div>
             Suas informações
           </div>
-          <div
+          <div 
             style={{
               ...styles.progressStep,
-              ...(currentStep === 2 ? styles.activeStep : {}),
+              ...(currentStep === 1 ? styles.activeStep : {}),
             }}
           >
             <div
@@ -199,13 +179,13 @@ const InfoFesta = () => {
           <div
             style={{
               ...styles.progressStep,
-              ...(currentStep === 3 ? styles.activeStep : {}),
+              ...(currentStep === 2 ? styles.activeStep : {}),
             }}
           >
             <div
               style={{
                 ...styles.stepCircle,
-                ...(currentStep === 3 ? styles.activeCircle : {}),
+                ...(currentStep === 2 ? styles.activeCircle : {}),
               }}
             ></div>
             Informações do Bar
@@ -214,72 +194,120 @@ const InfoFesta = () => {
 
         {/* Formulário de Informações da Festa */}
         <form onSubmit={handleSubmit}>
-          <div style={styles.radioGroup}>
-            <label style={styles.label}>Escolha o tipo de bebida:</label>
-            <label>
-              <input
-                type="radio"
-                name="bebidaTipo"
-                value="Basic"
-                checked={formData.bebidaTipo === "Basic"}
-                onChange={handleChange}
-              />
-              Basic
-              <ul>
-                <li>Bebidas Alcoólicas: Capira, Vodka, Tang, Leite com Manda</li>
-              </ul>
-            </label>
+          <div
+            style={{
+              marginTop: "20px",
+              marginBottom: "20px",
+              border: "2px solid #d4883a",
+              borderRadius: "8px",
+              padding: "20px",
+              transition: "all 0.3s ease-in-out",
+            }}
+          >
+            <h3 style={{ color: "black" }}>Escolha seu Plano:</h3>
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+              <button
+          onClick={() => {
+            setCurrentPlan((prev) => (prev === 0 ? plans.length - 1 : prev - 1));
+          }}
+          style={{
+            backgroundColor: "transparent",
+            border: "none",
+            fontSize: "24px",
+            cursor: "pointer",
+            color: "#d4883a",
+            transition: "transform 0.2s ease-in-out",
+          }}
+          onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.9)")}
+          onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
+              >
+          &#8592;
+              </button>
+              <div style={{ textAlign: "center", flex: 1 }}>
+          <h3 style={{ fontSize: "24px", marginBottom: "10px", color: "#3c3c3c" }}>
+            {plans[currentPlan].name}
+          </h3>
+          <p style={{ fontSize: "16px", color: "#6c6c6c" }}>
+            {plans[currentPlan].description}
+          </p>
+          <p style={{ fontSize: "20px", fontWeight: "bold", color: "#d4883a" }}>
+            {plans[currentPlan].price}
+          </p>
+              </div>
+              <button
+          onClick={() => {
+            setCurrentPlan((prev) => (prev === plans.length - 1 ? 0 : prev + 1));
+          }}
+          style={{
+            backgroundColor: "transparent",
+            border: "none",
+            fontSize: "24px",
+            cursor: "pointer",
+            color: "#d4883a",
+            transition: "transform 0.2s ease-in-out",
+          }}
+          onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.9)")}
+          onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
+              >
+          &#8594;
+              </button>
+            </div>
           </div>
-
           <div style={styles.inputGroup}>
-            <label htmlFor="numBarmans" style={styles.label}>
+            <label htmlFor="numConvidados" style={styles.label}>
               Número de Barmans:
             </label>
             <input
               type="number"
-              id="numBarmans"
-              name="numBarmans"
-              value={formData.numBarmans}
+              id="numConvidados"
+              name="numConvidados"
+              value={formData.numConvidados}
               onChange={handleChange}
               style={{ ...styles.input, color: "black" }}
               required
             />
           </div>
-
-          <div style={styles.checkboxGroup}>
-            <label style={styles.label}>Extras:</label>
-            <label>
+            <div
+            style={{
+              marginTop: "20px",
+              marginBottom: "20px",
+              border: "2px solid #d4883a",
+              borderRadius: "8px",
+              padding: "20px",
+              transition: "all 0.3s ease-in-out",
+            }}
+            >
+            <h3 style={{ color: "black" }}>Extras:</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: "10px", color: "#3c3c3c" }}>
               <input
                 type="checkbox"
-                name="Moscow Mule"
-                onChange={handleCheckboxChange}
+                name="extras"
+                value="Moscow Mule"
+                style={{ transform: "scale(1.2)" }}
               />
-              Moscow Mule - R$ 15
-            </label>
-            <label>
+              Moscow Mule - <span style={{ color: "#d4883a", fontWeight: "bold" }}>R$ 20</span>
+              </label>
+              <label style={{ display: "flex", alignItems: "center", gap: "10px", color: "#3c3c3c" }}>
               <input
                 type="checkbox"
-                name="Ginge Beer"
-                onChange={handleCheckboxChange}
+                name="extras"
+                value="Ginger Beer"
+                style={{ transform: "scale(1.2)" }}
               />
-              Ginge Beer - R$ 15
-            </label>
-          </div>
-
-          <div style={styles.inputGroup}>
-            <label htmlFor="observacoes" style={styles.label}>
-              Observações:
-            </label>
-            <textarea
-              id="observacoes"
-              name="observacoes"
-              value={formData.observacoes}
-              onChange={handleChange}
-              style={styles.input}
-              rows={3}
-            />
-          </div>
-
+              Ginger Beer - <span style={{ color: "#d4883a", fontWeight: "bold" }}>R$ 15</span>
+              </label>
+                <label style={{ display: "flex", alignItems: "center", gap: "10px", color: "#3c3c3c" }}>
+                <input
+                type="checkbox"
+                name="extras"
+                value="Gin Tônica"
+                style={{ transform: "scale(1.2)" }}
+                />
+                Gin Tônica - <span style={{ color: "#d4883a", fontWeight: "bold" }}>R$ 30</span>
+                </label>
+            </div>
+            </div>
           <button type="submit" style={styles.button}>
             Próximo
           </button>
